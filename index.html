@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f4">
+  <title>Cash Runway Checker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #1d3028;
+      background: #f5f7f4;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      --green: #176b4d;
+      --muted: #64736b;
+      --border: #dce4dd;
+    }
+
+    * { box-sizing: border-box; }
+
+    body { margin: 0; padding: 48px 20px; }
+
+    main { max-width: 900px; margin: 0 auto; }
+
+    header { margin-bottom: 30px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: .75rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 { margin: 0; font-size: clamp(2rem, 5vw, 2.8rem); letter-spacing: -.045em; }
+
+    header p:last-child { max-width: 590px; margin: 12px 0 0; color: var(--muted); line-height: 1.6; }
+
+    .card {
+      margin-top: 18px;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fff;
+      box-shadow: 0 4px 18px rgb(24 48 37 / 4%);
+    }
+
+    h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.015em; }
+    .section-note { margin: 6px 0 20px; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+
+    .field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 620px; }
+
+    label, .invoice-heading {
+      display: block;
+      color: #34463d;
+      font-size: .85rem;
+      font-weight: 650;
+    }
+
+    input, select {
+      width: 100%;
+      min-height: 44px;
+      margin-top: 7px;
+      padding: 10px 12px;
+      border: 1px solid #cbd6ce;
+      border-radius: 8px;
+      background: #fff;
+      color: #1d3028;
+      font: inherit;
+    }
+
+    input:focus, select:focus, button:focus-visible {
+      outline: 3px solid rgb(23 107 77 / 20%);
+      outline-offset: 2px;
+      border-color: var(--green);
+    }
+
+    .invoice-heading, .invoice-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 82px;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .invoice-heading { margin-bottom: 2px; }
+    .invoice-row { margin-top: 10px; }
+    .invoice-row input, .invoice-row select { margin-top: 0; }
+
+    button {
+      min-height: 42px;
+      padding: 9px 14px;
+      border: 1px solid #b9d2c4;
+      border-radius: 8px;
+      background: #f4faf6;
+      color: var(--green);
+      font: inherit;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover { background: #eaf5ee; }
+    .remove-invoice { min-height: 44px; padding: 8px; }
+    .add-invoice { margin-top: 16px; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 14px 12px; border-bottom: 1px solid #e8ede9; }
+    th { color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .035em; }
+    td { font-variant-numeric: tabular-nums; }
+    th:not(:first-child), td:not(:first-child) { text-align: right; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr.negative { background: #fff0ef; color: #a32924; }
+    tbody tr.negative td:first-child { box-shadow: inset 3px 0 #c73730; }
+    .summary {
+      margin: 18px 0 0;
+      padding: 15px 16px;
+      border-radius: 9px;
+      background: #eff7f1;
+      color: #245c40;
+      font-weight: 650;
+      line-height: 1.5;
+    }
+    .summary.negative { background: #fff0ef; color: #a32924; }
+    .empty-state { padding: 18px 0 2px; color: var(--muted); font-size: .9rem; }
+
+    @media (max-width: 560px) {
+      body { padding: 30px 14px; }
+      .card { padding: 19px 16px; }
+      .field-grid { grid-template-columns: 1fr; }
+      .invoice-heading, .invoice-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 68px; gap: 8px; }
+      th, td { padding: 12px 9px; }
+      table { min-width: 470px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">A clearer view of your cash</p>
+      <h1>Cash Runway Checker</h1>
+      <p>See how your cash could change over the next six months. Add your regular costs and expected client invoice payments to spot a shortfall early.</p>
+    </header>
+
+    <section class="card" aria-labelledby="starting-point-title">
+      <h2 id="starting-point-title">Your starting point</h2>
+      <p class="section-note">Enter your cash balance today and your typical monthly costs.</p>
+      <div class="field-grid">
+        <label for="opening-cash">Opening cash balance (£)
+          <input id="opening-cash" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+        </label>
+        <label for="monthly-costs">Monthly costs (£)
+          <input id="monthly-costs" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+        </label>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="invoices-title">
+      <h2 id="invoices-title">Expected client invoices</h2>
+      <p class="section-note">Add each invoice amount and the month you expect it to be paid. You can leave this blank if you have no expected payments.</p>
+      <div class="invoice-heading" aria-hidden="true">
+        <span>Invoice amount (£)</span>
+        <span>Expected payment</span>
+        <span></span>
+      </div>
+      <div id="invoice-list"></div>
+      <button class="add-invoice" id="add-invoice" type="button">+ Add an invoice</button>
+    </section>
+
+    <section class="card" aria-labelledby="forecast-title">
+      <h2 id="forecast-title">Your 6-month forecast</h2>
+      <p class="section-note">The closing balance each month becomes the starting balance for the next.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Month</th>
+              <th scope="col">Money in</th>
+              <th scope="col">Money out</th>
+              <th scope="col">Closing balance</th>
+            </tr>
+          </thead>
+          <tbody id="forecast-body"></tbody>
+        </table>
+      </div>
+      <p class="summary" id="summary" role="status" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script>
+    const forecastMonths = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date();
+      date.setDate(1);
+      date.setMonth(date.getMonth() + index);
+      return date;
+    });
+    const monthFormatter = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" });
+    const currencyFormatter = new Intl.NumberFormat("en-GB", {
+      style: "currency",
+      currency: "GBP",
+      minimumFractionDigits: 2
+    });
+    const invoiceList = document.querySelector("#invoice-list");
+    const forecastBody = document.querySelector("#forecast-body");
+    const summary = document.querySelector("#summary");
+
+    function formatCurrency(amount) {
+      return currencyFormatter.format(amount);
+    }
+
+    function addInvoice() {
+      const row = document.createElement("div");
+      row.className = "invoice-row";
+
+      const amountLabel = document.createElement("label");
+      const amountInput = document.createElement("input");
+      amountInput.type = "number";
+      amountInput.min = "0";
+      amountInput.step = "0.01";
+      amountInput.inputMode = "decimal";
+      amountInput.placeholder = "e.g. 1,200";
+      amountInput.setAttribute("aria-label", "Invoice amount in pounds");
+      amountInput.addEventListener("input", updateForecast);
+      amountLabel.append(amountInput);
+
+      const monthLabel = document.createElement("label");
+      const monthSelect = document.createElement("select");
+      monthSelect.setAttribute("aria-label", "Expected invoice payment month");
+      forecastMonths.forEach((month, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = monthFormatter.format(month);
+        monthSelect.append(option);
+      });
+      monthSelect.addEventListener("change", updateForecast);
+      monthLabel.append(monthSelect);
+
+      const removeButton = document.createElement("button");
+      removeButton.className = "remove-invoice";
+      removeButton.type = "button";
+      removeButton.textContent = "Remove";
+      removeButton.setAttribute("aria-label", "Remove this invoice");
+      removeButton.addEventListener("click", () => {
+        row.remove();
+        updateForecast();
+      });
+
+      row.append(amountLabel, monthLabel, removeButton);
+      invoiceList.append(row);
+      amountInput.focus();
+      updateForecast();
+    }
+
+    function readAmount(input) {
+      const value = Number(input.value);
+      return input.value !== "" && Number.isFinite(value) && value >= 0 ? value : 0;
+    }
+
+    function updateForecast() {
+      const openingCash = readAmount(document.querySelector("#opening-cash"));
+      const monthlyCosts = readAmount(document.querySelector("#monthly-costs"));
+      const invoiceTotals = Array(forecastMonths.length).fill(0);
+
+      invoiceList.querySelectorAll(".invoice-row").forEach((row) => {
+        const amount = readAmount(row.querySelector('input[type="number"]'));
+        const monthIndex = Number(row.querySelector("select").value);
+        invoiceTotals[monthIndex] += amount;
+      });
+
+      let closingBalance = openingCash;
+      let lowestBalance = Number.POSITIVE_INFINITY;
+      let lowestMonth = 0;
+      forecastBody.replaceChildren();
+
+      forecastMonths.forEach((month, index) => {
+        const moneyIn = invoiceTotals[index];
+        closingBalance += moneyIn - monthlyCosts;
+        if (closingBalance < lowestBalance) {
+          lowestBalance = closingBalance;
+          lowestMonth = index;
+        }
+
+        const row = document.createElement("tr");
+        if (closingBalance < 0) row.classList.add("negative");
+        [monthFormatter.format(month), formatCurrency(moneyIn), formatCurrency(monthlyCosts), formatCurrency(closingBalance)]
+          .forEach((value) => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.append(cell);
+          });
+        forecastBody.append(row);
+      });
+
+      summary.textContent = `Your lowest projected balance is ${formatCurrency(lowestBalance)} in ${monthFormatter.format(forecastMonths[lowestMonth])}.`;
+      summary.classList.toggle("negative", lowestBalance < 0);
+    }
+
+    document.querySelector("#opening-cash").addEventListener("input", updateForecast);
+    document.querySelector("#monthly-costs").addEventListener("input", updateForecast);
+    document.querySelector("#add-invoice").addEventListener("click", addInvoice);
+    updateForecast();
+  </script>
+</body>
+</html>
