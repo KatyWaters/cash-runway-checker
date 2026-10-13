@@ -115,6 +115,8 @@
     tbody tr:last-child td { border-bottom: 0; }
     tbody tr.negative { background: #fff0ef; color: #a32924; }
     tbody tr.negative td:first-child { box-shadow: inset 3px 0 #c73730; }
+    tbody tr.buffer-low { background: #fff7e8; color: #8a5700; }
+    tbody tr.buffer-low td:first-child { box-shadow: inset 3px 0 #d99519; }
     .summary {
       margin: 18px 0 0;
       padding: 15px 16px;
@@ -125,6 +127,7 @@
       line-height: 1.5;
     }
     .summary.negative { background: #fff0ef; color: #a32924; }
+    .summary.buffer-low { background: #fff7e8; color: #8a5700; }
     .empty-state { padding: 18px 0 2px; color: var(--muted); font-size: .9rem; }
 
     @media (max-width: 560px) {
@@ -154,6 +157,9 @@
         </label>
         <label for="monthly-costs">Monthly costs (£)
           <input id="monthly-costs" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+        </label>
+        <label for="minimum-cash-buffer">Minimum cash buffer (£)
+          <input id="minimum-cash-buffer" type="number" min="0" step="0.01" value="1500" inputmode="decimal">
         </label>
       </div>
     </section>
@@ -262,6 +268,7 @@
     function updateForecast() {
       const openingCash = readAmount(document.querySelector("#opening-cash"));
       const monthlyCosts = readAmount(document.querySelector("#monthly-costs"));
+      const minimumCashBuffer = readAmount(document.querySelector("#minimum-cash-buffer"));
       const invoiceTotals = Array(forecastMonths.length).fill(0);
 
       invoiceList.querySelectorAll(".invoice-row").forEach((row) => {
@@ -284,7 +291,11 @@
         }
 
         const row = document.createElement("tr");
-        if (closingBalance < 0) row.classList.add("negative");
+        if (closingBalance < 0) {
+          row.classList.add("negative");
+        } else if (closingBalance > 0 && closingBalance < minimumCashBuffer) {
+          row.classList.add("buffer-low");
+        }
         [monthFormatter.format(month), formatCurrency(moneyIn), formatCurrency(monthlyCosts), formatCurrency(closingBalance)]
           .forEach((value) => {
             const cell = document.createElement("td");
@@ -294,12 +305,17 @@
         forecastBody.append(row);
       });
 
-      summary.textContent = `Your lowest projected balance is ${formatCurrency(lowestBalance)} in ${monthFormatter.format(forecastMonths[lowestMonth])}.`;
+      const bufferStatus = lowestBalance < minimumCashBuffer
+        ? `Your balance falls below your minimum cash buffer of ${formatCurrency(minimumCashBuffer)}.`
+        : `Your balance stays at or above your minimum cash buffer of ${formatCurrency(minimumCashBuffer)}.`;
+      summary.textContent = `Your lowest projected balance is ${formatCurrency(lowestBalance)} in ${monthFormatter.format(forecastMonths[lowestMonth])}. ${bufferStatus}`;
       summary.classList.toggle("negative", lowestBalance < 0);
+      summary.classList.toggle("buffer-low", lowestBalance >= 0 && lowestBalance < minimumCashBuffer);
     }
 
     document.querySelector("#opening-cash").addEventListener("input", updateForecast);
     document.querySelector("#monthly-costs").addEventListener("input", updateForecast);
+    document.querySelector("#minimum-cash-buffer").addEventListener("input", updateForecast);
     document.querySelector("#add-invoice").addEventListener("click", addInvoice);
     updateForecast();
   </script>
